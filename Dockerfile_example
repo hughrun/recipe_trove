@@ -1,0 +1,34 @@
+FROM ubuntu:16.04
+MAINTAINER Hugh Rundle
+LABEL Purpose="Run Recipe Trove Twitter bot"
+
+# update
+RUN apt-get update -y && apt-get clean -y && apt-get install apt-utils -y && apt-get install build-essential -y
+
+# install curl & node 6.x
+RUN apt-get install curl -y && curl -sL https://deb.nodesource.com/setup_6.x | bash - && apt-get install nodejs -y
+
+# install bzip2
+RUN apt-get install bzip2 -y
+
+# install phantom
+RUN apt-get install phantomjs -y
+
+# make app directory and install npm packages
+WORKDIR /home/hugh/recipe_trove
+RUN mkdir app && cd app && npm install random-js && npm install request && npm install twit && npm install webshot
+
+# add files
+ADD recipes.js lastId.txt app/
+
+# set environment variables
+ENV TWITTER_KEY="yourkey"
+ENV TWITTER_SECRET="yoursecret"
+ENV TWITTER_ACCESS_TOKEN="your-accesstoken"
+ENV TWITTER_TOKEN_SECRET="yourtokensecret"
+ENV TROVE_API_KEY="yourapikey"
+
+EXPOSE 8010
+
+# start script
+CMD cd app && node recipes.js
