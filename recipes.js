@@ -150,6 +150,7 @@ function tryAgainMessage(searchTerm, user) {
 // send the tweet
 function sendTweet(searchTerm, user, url) {
 	var image = fs.readFileSync('pic.png', { encoding: 'base64'});
+	searchTerm = searchTerm.replace(/%20/g, " ");
 	var msg = `@${user} I found you the perfect recipe for ${searchTerm} - ${url}`;
 
 	// first we must post the media to Twitter 
