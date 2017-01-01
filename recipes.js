@@ -126,7 +126,7 @@ function getRecipes(searchTerm, user) {
 					if (err) {
 						console.error(err)
 					} else {
-						sendTweet(searchTerm, user)
+						sendTweet(searchTerm, user, recipe.troveUrl)
 					}
 				});			
 			} else {
@@ -148,9 +148,9 @@ function tryAgainMessage(searchTerm, user) {
 };
 
 // send the tweet
-function sendTweet(searchTerm, user) {
+function sendTweet(searchTerm, user, url) {
 	var image = fs.readFileSync('pic.png', { encoding: 'base64'});
-	var msg = "@" + user + " I found you the perfect recipe for " + searchTerm;
+	var msg = `@${user} I found you the perfect recipe for ${searchTerm} - ${url}`;
 
 	// first we must post the media to Twitter 
 	T.post('media/upload', { media_data: image }, function (err, data, response) {
