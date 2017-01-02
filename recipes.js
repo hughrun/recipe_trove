@@ -117,7 +117,7 @@ function getRecipes(searchTerm, user) {
 				// put relevant articles in an array
 				var articleArray = [];
 				articles.forEach((article) => {
-					if (article.relevance.score > 2 && article.articleText) {
+					if (article.relevance.score > 1.5 && article.articleText) {
 						articleArray.push(article);
 					}
 				});
@@ -131,6 +131,7 @@ function getRecipes(searchTerm, user) {
 				webshot(text, 'pic.png', options, (err)=>{
 					if (err) {
 						console.error(`** webshot error **\n${err}`);
+						// try again
 						getRecipes(searchTerm, user);
 					} else {
 						sendTweet(searchTerm, user, recipe.troveUrl)
@@ -178,6 +179,8 @@ function sendTweet(searchTerm, user, url) {
 		T.post('statuses/update', params, function (err, data, response) {
 		  	if (err) {
 		  		console.log(`### error posting to Twitter ### \n ${err}`);
+		  		// try again
+		  		getRecipes(searchTerm, user);
 		  	};
 		    console.log(data.text)
 	  });
