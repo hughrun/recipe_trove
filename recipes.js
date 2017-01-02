@@ -100,47 +100,58 @@ function setLast(id){
 function getRecipes(searchTerm, user) {
 	// encode anything in searchTerm that's not a letter or number as a space (%20)
 	searchTerm = searchTerm.replace(/\W/g, "%20");
-	request(`http://api.trove.nla.gov.au/result?key=${apikey}&encoding=json&zone=newspaper&include=articletext&n=100&q=recipe%20${searchTerm}`, (err, resp, body)=>{
-		if (err) return console.error(`** error requesting from Trove API ** \n ${err})`);
-		const result = JSON.parse(body);
-		const articles = result.response.zone[0].records.article;
+	request(`http://api.trove.nla.gov.au/result?key=${apikey}&encoding=json&zone=newspaper&include=articletext&n=100&q=recipe%20${searchTerm}`, (err, resp, body) => {
+		if (err) {
+			console.error(`** error requesting from Trove API ** \n ${err})`);
+			tryAgainMessage(searchTerm, user);
+		}
+		var result;
+		try {
+			result = JSON.parse(body);
+		} catch (err) {
+			console.error(`## JSON parsing error ## \n Query was: ${searchTerm} \n response body below... \n ${body}`);
+		}
+		if (typeof result !== "undefined") {
+			const articles = result.response.zone[0].records.article;
+			if (articles) {
+				// put relevant articles in an array
+				var articleArray = [];
+				articles.forEach((article) => {
+					if (article && article.relevance.score > 2 && article.articleText) {
+						articleArray.push(article);
+						}
+					});
+				// pick a recipe
+				if (articleArray.length > 0) {
+					var recipe = r.pick(articleArray);
+					// clear the array
+					articleArray = [];
 
-		if (articles) {
-			// put relevant articles in an array
-			var articleArray = [];
-			articles.forEach((article) => {
-				if (article && article.relevance.score > 2 && article.articleText) {
-					articleArray.push(article);
-					}
-				});
-			// pick a recipe
-			if (articleArray.length > 0) {
-				var recipe = r.pick(articleArray);
-				// clear the array
-				articleArray = [];
-
-				// save html string as a 'screenshot' image
-				const options = {windowSize: {width: 320, height: 'all'}, shotSize: {width: 'all', height: 'all'}, siteType: 'html', defaultWhiteBackground: true};
-				const text = `${recipe.articleText}<p style="text-align:center"><strong>From ${recipe.title.value}</strong><br><br><img src="http://help.nla.gov.au/sites/default/files/trove_author/API-dark.png" alt="Powered by Trove"></p>`;
-				webshot(text, 'pic.png', options, (err)=>{
-					if (err) {
-						console.error(err)
-					} else {
-						sendTweet(searchTerm, user, recipe.troveUrl)
-					}
-				});			
+					// save html string as a 'screenshot' image
+					const options = {windowSize: {width: 320, height: 'all'}, shotSize: {width: 'all', height: 'all'}, siteType: 'html', defaultWhiteBackground: true};
+					const text = `${recipe.articleText}<p style="text-align:center"><strong>From ${recipe.title.value}</strong><br><br><img src="http://help.nla.gov.au/sites/default/files/trove_author/API-dark.png" alt="Powered by Trove"></p>`;
+					webshot(text, 'pic.png', options, (err)=>{
+						if (err) {
+							console.error(err)
+						} else {
+							sendTweet(searchTerm, user, recipe.troveUrl)
+						}
+					});			
+				} else {
+					tryAgainMessage(searchTerm, user);
+				}
 			} else {
 				tryAgainMessage(searchTerm, user);
 			}
 		} else {
 			tryAgainMessage(searchTerm, user);
-		}			
+		}		
 	});
 };
 
 // if no search results
 function tryAgainMessage(searchTerm, user) {
-	const face = r.pick(['😯','😞','😟'])
+	const face = r.pick(['😯','😞','😟','😢'])
 	searchTerm = searchTerm.replace(/%20/g, " ");
 	var msg = `@${user} Sorry, I couldn't find a recipe for ${searchTerm} ${face}`;
 	T.post('statuses/update', { status: msg }, function(err, data, response) {
@@ -150,14 +161,18 @@ function tryAgainMessage(searchTerm, user) {
 // send the tweet
 function sendTweet(searchTerm, user, url) {
 	var image = fs.readFileSync('pic.png', { encoding: 'base64'});
+	// clean up search term encoding, and capitalise first letter
 	searchTerm = searchTerm.replace(/%20/g, " ");
-	var msg = `@${user} I found you the perfect recipe for ${searchTerm} - ${url}`;
-
+	function capitalise (string){
+     return string.charAt(0).toUpperCase() + string.slice(1);
+	};
+	const ingredient = capitalise(searchTerm);
+	const messages = [`I found @${user} the perfect ${ingredient} recipe - ${url}`, `Mmm, a delicious ${ingredient} recipe for @${user}... ${url}`, `Guess what @${user} is cooking tonight? ${ingredient}! ${url}`, `Hope you enjoy this ${ingredient} recipe, ${user}! - ${url}`];
+	var msg = r.pick(messages);
 	// first we must post the media to Twitter 
 	T.post('media/upload', { media_data: image }, function (err, data, response) {
 		 if (err){
-		 	console.log('### error uploading pic');
-		 	console.log(err);
+		 	console.log(`### error uploading pic ### \n ${err}`);
 		 };
 		// now we can reference the media and post a tweet (media will attach to the tweet) 
 	 	var mediaIdStr = data.media_id_string;
@@ -165,12 +180,10 @@ function sendTweet(searchTerm, user, url) {
 	 
 		T.post('statuses/update', params, function (err, data, response) {
 		  	if (err) {
-		  		console.log('### error posting to Twitter ###');
-		  		console.log(err);
+		  		console.log(`### error posting to Twitter ### \n ${err}`);
 		  	};
 		    console.log(data.text)
 	  });
 	});
 	image = null;		
 };
-
