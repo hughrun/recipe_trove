@@ -97,7 +97,7 @@ function setLast(id){
 	fs.writeFile('lastId.txt', id);
 };
 
-function getRecipes(searchTerm, user) {
+unction getRecipes(searchTerm, user) {
 	// encode anything in searchTerm that's not a letter or number as a space (%20)
 	searchTerm = searchTerm.replace(/\W/g, "%20");
 	request(`http://api.trove.nla.gov.au/result?key=${apikey}&encoding=json&zone=newspaper&include=articletext&n=100&q=recipe%20${searchTerm}`, (err, resp, body) => {
@@ -113,34 +113,31 @@ function getRecipes(searchTerm, user) {
 		}
 		if (typeof result !== "undefined") {
 			const articles = result.response.zone[0].records.article;
-			if (articles) {
+			try {
 				// put relevant articles in an array
 				var articleArray = [];
 				articles.forEach((article) => {
-					if (article && article.relevance.score > 2 && article.articleText) {
+					if (article.relevance.score > 2 && article.articleText) {
 						articleArray.push(article);
-						}
-					});
+					}
+				});
 				// pick a recipe
-				if (articleArray.length > 0) {
-					var recipe = r.pick(articleArray);
-					// clear the array
-					articleArray = [];
-
-					// save html string as a 'screenshot' image
-					const options = {windowSize: {width: 320, height: 'all'}, shotSize: {width: 'all', height: 'all'}, siteType: 'html', defaultWhiteBackground: true};
-					const text = `${recipe.articleText}<p style="text-align:center"><strong>From ${recipe.title.value}</strong><br><br><img src="http://help.nla.gov.au/sites/default/files/trove_author/API-dark.png" alt="Powered by Trove"></p>`;
-					webshot(text, 'pic.png', options, (err)=>{
-						if (err) {
-							console.error(err)
-						} else {
-							sendTweet(searchTerm, user, recipe.troveUrl)
-						}
-					});			
-				} else {
-					tryAgainMessage(searchTerm, user);
-				}
-			} else {
+				var recipe = r.pick(articleArray);
+				// clear the array
+				articleArray = [];
+				// save html string as a 'screenshot' image
+				const options = {windowSize: {width: 320, height: 'all'}, shotSize: {width: 'all', height: 'all'}, siteType: 'html', defaultWhiteBackground: true};
+				const text = `${recipe.articleText}<p style="text-align:center"><strong>From ${recipe.title.value}</strong><br><br><img src="http://help.nla.gov.au/sites/default/files/trove_author/API-dark.png" alt="Powered by Trove"></p>`;
+				webshot(text, 'pic.png', options, (err)=>{
+					if (err) {
+						console.error(`** webshot error **\n${err}`);
+						getRecipes(searchTerm, user);
+					} else {
+						sendTweet(searchTerm, user, recipe.troveUrl)
+					}
+				});			
+			} catch (err) {
+				console.error(`** error getting recipe **\n${err}`);
 				tryAgainMessage(searchTerm, user);
 			}
 		} else {
