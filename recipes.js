@@ -97,7 +97,7 @@ function setLast(id){
 	fs.writeFile('lastId.txt', id);
 };
 
-unction getRecipes(searchTerm, user) {
+function getRecipes(searchTerm, user) {
 	// encode anything in searchTerm that's not a letter or number as a space (%20)
 	searchTerm = searchTerm.replace(/\W/g, "%20");
 	request(`http://api.trove.nla.gov.au/result?key=${apikey}&encoding=json&zone=newspaper&include=articletext&n=100&q=recipe%20${searchTerm}`, (err, resp, body) => {
@@ -164,7 +164,7 @@ function sendTweet(searchTerm, user, url) {
      return string.charAt(0).toUpperCase() + string.slice(1);
 	};
 	const ingredient = capitalise(searchTerm);
-	const messages = [`I found @${user} the perfect ${ingredient} recipe - ${url}`, `Mmm, a delicious ${ingredient} recipe for @${user}... ${url}`, `Guess what @${user} is cooking tonight? ${ingredient}! ${url}`, `Hope you enjoy this ${ingredient} recipe, ${user}! - ${url}`];
+	const messages = [`I found @${user} the perfect ${ingredient} recipe - ${url}`, `Mmm, a delicious ${ingredient} recipe for @${user}... ${url}`, `Guess what @${user} is cooking tonight? ${ingredient}! ${url}`, `Hope you enjoy this ${ingredient} recipe, @${user}! - ${url}`];
 	var msg = r.pick(messages);
 	// first we must post the media to Twitter 
 	T.post('media/upload', { media_data: image }, function (err, data, response) {
