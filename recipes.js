@@ -158,32 +158,39 @@ function tryAgainMessage(searchTerm, user) {
 
 // send the tweet
 function sendTweet(searchTerm, user, url) {
-	var image = fs.readFileSync('pic.png', { encoding: 'base64'});
-	// clean up search term encoding, and capitalise first letter
-	searchTerm = searchTerm.replace(/%20/g, " ");
-	function capitalise (string){
-     return string.charAt(0).toUpperCase() + string.slice(1);
-	};
-	const ingredient = capitalise(searchTerm);
-	const messages = [`I found @${user} the perfect ${ingredient} recipe - ${url}`, `Mmm, a delicious ${ingredient} recipe for @${user}... ${url}`, `Guess what @${user} is cooking tonight? ${ingredient}! ${url}`, `Hope you enjoy this ${ingredient} recipe, @${user}! - ${url}`];
-	var msg = r.pick(messages);
-	// first we must post the media to Twitter 
-	T.post('media/upload', { media_data: image }, function (err, data, response) {
-		 if (err){
-		 	console.log(`### error uploading pic ### \n ${err}`);
-		 };
-		// now we can reference the media and post a tweet (media will attach to the tweet) 
-	 	var mediaIdStr = data.media_id_string;
-		var params = { status: msg, media_ids: [mediaIdStr] }
-	 
-		T.post('statuses/update', params, function (err, data, response) {
-		  	if (err) {
-		  		console.log(`### error posting to Twitter ### \n ${err}`);
-		  		// try again
-		  		getRecipes(searchTerm, user);
-		  	};
-		    console.log(data.text)
-	  });
-	});
-	image = null;		
+	try {
+		var image = fs.readFileSync('pic.png', { encoding: 'base64'});
+		// clean up search term encoding, and capitalise first letter
+		searchTerm = searchTerm.replace(/%20/g, " ");
+		function capitalise (string){
+	     return string.charAt(0).toUpperCase() + string.slice(1);
+		};
+		const ingredient = capitalise(searchTerm);
+		const messages = [`I found @${user} the perfect ${ingredient} recipe - ${url}`, `Mmm, a delicious ${ingredient} recipe for @${user}... ${url}`, `Guess what @${user} is cooking tonight? ${ingredient}! ${url}`, `Hope you enjoy this ${ingredient} recipe, @${user}! - ${url}`];
+		var msg = r.pick(messages);
+		// first we must post the media to Twitter 
+		T.post('media/upload', { media_data: image }, function (err, data, response) {
+			 if (err){
+			 	console.log(`### error uploading pic ### \n ${err}`);
+			 	// try again
+			 	getRecipes(searchTerm, user);
+			 };
+			// now we can reference the media and post a tweet (media will attach to the tweet) 
+		 	var mediaIdStr = data.media_id_string;
+			var params = { status: msg, media_ids: [mediaIdStr] }
+		 
+			T.post('statuses/update', params, function (err, data, response) {
+			  	if (err) {
+			  		console.log(`### error posting to Twitter ### \n ${err}`);
+			  		// try again
+			  		getRecipes(searchTerm, user);
+			  	};
+			    console.log(data.text)
+		  });
+		});
+		image = null;
+	} catch (err) {
+		console.log(`### error on sendTweet ### \n ${err}`);
+		getRecipes(searchTerm, user);
+	}
 };
