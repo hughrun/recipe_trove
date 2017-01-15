@@ -174,19 +174,20 @@ function sendTweet(searchTerm, user, url) {
 			 	console.log(`### error uploading pic ### \n ${err}`);
 			 	// try again
 			 	getRecipes(searchTerm, user);
-			 };
-			// now we can reference the media and post a tweet (media will attach to the tweet) 
-		 	var mediaIdStr = data.media_id_string;
-			var params = { status: msg, media_ids: [mediaIdStr] }
-		 
-			T.post('statuses/update', params, function (err, data, response) {
-			  	if (err) {
-			  		console.log(`### error posting to Twitter ### \n ${err}`);
-			  		// try again
-			  		getRecipes(searchTerm, user);
-			  	};
-			    console.log(data.text)
-		  });
+			 } else {
+				// now we can reference the media and post a tweet (media will attach to the tweet) 
+			 	var mediaIdStr = data.media_id_string;
+				var params = { status: msg, media_ids: [mediaIdStr] }
+				T.post('statuses/update', params, function (err, data, response) {
+				  	if (err) {
+				  		console.log(`### error posting to Twitter ### \n ${err}`);
+				  		// try again
+				  		getRecipes(searchTerm, user);
+				  	} else {
+				  		console.log(data.text)
+				  	}
+			  });			 	
+			 }
 		});
 		image = null;
 	} catch (err) {
