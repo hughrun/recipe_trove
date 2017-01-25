@@ -24,6 +24,14 @@ http.createServer(function (req, res) {
   res.end('Trove Recipes Bot\nThis is not the app you are looking for\nGo to <a href="https://twitter.com/recipe_trove">@recipe_trove</a>');
 }).listen(8010);
 
+stream.on('uncaughtException', (err) => {
+	console.log(`## exception with Twitter stream ## \n ${err}`)
+})
+
+stream.on('error', (err) => {
+	console.log(`## error with Twitter stream ## \n ${err}`)
+})
+
 stream.on('tweet', function(tweet){
 	var text = tweet.text;
 	var name = text.slice(0,13).toLowerCase();
