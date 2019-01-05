@@ -1,3 +1,5 @@
+**Due to Twitter API changes this code no longer works and will not be updated**
+
 # Recipe Trove
 
 A Twitter bot that takes a query and responds with either a recipe from the National Library of Australia's **Trove** digitised newspaper archive, or a message saying nothing can be found.
